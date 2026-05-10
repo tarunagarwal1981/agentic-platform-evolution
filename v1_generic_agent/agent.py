@@ -30,7 +30,7 @@ from dotenv import load_dotenv
 # ---------------------------------------------------------------------------
 
 DEMO_SCENARIO = (
-    "What is the total cost impact if we delay this shipment by three days?"
+    "Is this new hire fully compliant and ready to start given their documents and role requirements?"
 )
 
 MODEL = "claude-sonnet-4-20250514"
@@ -45,108 +45,176 @@ def _chunky_records(prefix: str, rows: int) -> list[dict[str, Any]]:
     return [
         {
             "row_id": f"{prefix}-{i:04d}",
-            "sku_family": "WIDGET-ALPHA" if i % 2 == 0 else "WIDGET-BETA",
-            "on_hand": 120 + (i % 37),
-            "safety_stock": 40 + (i % 11),
-            "atp_date": "2025-06-02" if i % 3 else "2025-06-05",
-            "notes": "Promotional buffer reserved for Q3 campaign"
-            if i % 5 == 0
-            else "Standard rolling forecast",
+            "doc_type": (
+                "passport"
+                if i % 6 == 0
+                else "work_authorization"
+                if i % 6 == 1
+                else "background_check"
+                if i % 6 == 2
+                else "tax_form"
+                if i % 6 == 3
+                else "nda"
+                if i % 6 == 4
+                else "benefits_enrollment"
+            ),
+            "submitted_at": "2026-05-02" if i % 3 else "2026-05-06",
+            "expires_at": None if i % 4 else "2027-05-06",
+            "verification_status": (
+                "verified" if i % 5 else "needs_review"
+            ),
+            "verification_source": (
+                "vendor_api" if i % 2 == 0 else "manual_review"
+            ),
+            "notes": (
+                "Image quality borderline; reviewer requested re-upload"
+                if i % 5 == 0
+                else "Standard onboarding packet item"
+            ),
         }
         for i in range(rows)
     ]
 
 
-def inventory_tool(_: dict[str, Any]) -> dict[str, Any]:
-    """Warehouse / ATP style facts—far more detail than the final answer needs."""
+def documents_tool(_: dict[str, Any]) -> dict[str, Any]:
+    """Document intake + verification facts—far more detail than the final answer needs."""
     return {
-        "shipment_id": "SHP-99821",
-        "promise_date_baseline": "2025-06-04",
-        "promise_date_plus_3d": "2025-06-07",
-        "skus": _chunky_records("inv", 18),
+        "candidate_id": "CAND-10492",
+        "document_types_submitted": [
+            "passport",
+            "work_authorization",
+            "tax_form",
+            "nda",
+            "background_check",
+        ],
+        "missing_documents": [
+            "i9_section_2_employer_review",
+            "bank_details_for_payroll",
+        ],
+        "documents": _chunky_records("doc", 18),
         "risk_flags": [
-            "lane_constrained_drayage",
-            "promo_allocation_overlap",
+            "work_authorization_expires_within_12_months",
+            "background_check_vendor_delay",
         ],
         "analyst_commentary": textwrap.dedent(
             """
-            Inventory is *technically* sufficient for a 3-day slip on paper, but
-            several SKUs share promotional allocation pools. The raw ATP table
-            often disagrees with marketing holds—watch row-level notes.
+            Document completeness looks close on paper, but the raw verification
+            stream is noisy. Several items are in "needs_review" due to image
+            quality or vendor latency—watch row-level notes and expiry dates.
             """
         ).strip(),
     }
 
 
-def logistics_tool(_: dict[str, Any]) -> dict[str, Any]:
-    """Carrier + detention style facts."""
+def role_requirements_tool(_: dict[str, Any]) -> dict[str, Any]:
+    """Role + department requirements—noisy checklist facts."""
     return {
-        "shipment_id": "SHP-99821",
-        "mode": "ocean_fcl",
-        "baseline_demurrage_curve": [
-            {"day": 0, "est_usd": 0},
-            {"day": 1, "est_usd": 850},
-            {"day": 2, "est_usd": 1700},
-            {"day": 3, "est_usd": 2650},
+        "role_id": "ROLE-ENG-2",
+        "department": "Engineering",
+        "required_certifications": [
+            "security_awareness_annual",
+            "privacy_training_gdpr_basics",
         ],
-        "per_diem_reefer": 175,
-        "appointments": _chunky_records("appt", 12),
-        "carrier_messages": [
-            "If we slide 3d, we likely miss the Friday gate; weekend storage applies.",
-            "Alternate routing exists but needs manual approval (not modeled here).",
+        "required_documents_per_role": [
+            "nda",
+            "ip_assignment",
+            "work_authorization",
+        ],
+        "department_clearances_needed": [
+            "laptop_issued",
+            "source_repo_access",
+            "prod_access_denied_until_90d",
+        ],
+        "onboarding_checklist_items": [
+            {
+                "item": f"checklist_item_{i}",
+                "status": "complete" if i % 4 else "pending",
+                "owner": "IT" if i % 3 == 0 else "HR",
+                "notes": "Waiting on manager approval" if i % 5 == 0 else "",
+            }
+            for i in range(12)
+        ],
+        "department_messages": [
+            "Role requires NDA + IP assignment before repository access is granted.",
+            "Security training must be completed by end of first week.",
         ],
     }
 
 
-def contract_tool(_: dict[str, Any]) -> dict[str, Any]:
-    """SLA / chargeback clauses—dense text-ish JSON."""
+def compliance_tool(_: dict[str, Any]) -> dict[str, Any]:
+    """Compliance frameworks + liability clauses—dense text-ish JSON."""
     return {
-        "shipment_id": "SHP-99821",
-        "customer_id": "CUST-7712",
-        "sla": {
-            "on_time_delivery": "must_arrive_by_2025_06_05_local",
-            "penalty_formula": "2.5% of line value per business day late, capped at 15%",
-            "exceptions": ["force_majeure", "customer_caused_delay"],
+        "compliance_framework": "employment_onboarding_controls_v2",
+        "jurisdictions": [
+            {
+                "country": "US",
+                "requirements": [
+                    "I-9 completed within 3 business days of start date",
+                    "Background check must be adjudicated before start for restricted roles",
+                ],
+                "penalties": [
+                    {"type": "civil_fine", "range_usd": [250, 2500]},
+                    {"type": "audit_risk", "notes": "missing I-9 increases audit exposure"},
+                ],
+            },
+            {
+                "country": "DE",
+                "requirements": [
+                    "Data protection acknowledgement (GDPR) signed",
+                    "Works council notification for certain departments (if applicable)",
+                ],
+                "penalties": [
+                    {
+                        "type": "liability",
+                        "notes": "access before GDPR acknowledgement increases liability",
+                    }
+                ],
+            },
+        ],
+        "penalty_for_non_compliant_hire": {
+            "summary": "Fines + legal exposure + policy breach escalation",
+            "internal_consequence": "security exception ticket + VP approval required",
         },
         "clause_snippets": [
             textwrap.dedent(
                 """
-                Section 9.4: Carrier demurrage, detention, and per-diem passes through
-                to Customer unless Delay is attributable to Supplier manufacturing.
-                Allocation disputes between programs are borne by Supplier.
+                Policy 3.1: A new hire may not start work until identity and work
+                authorization are verified per jurisdiction. Any exception must be
+                documented with compensating controls and approved by HR + Legal.
                 """
             ).strip(),
             textwrap.dedent(
                 """
-                Exhibit C: Expedite is pre-authorized up to $4,500 if required to
-                recover OTD; amounts above require VP approval within 4 business hours.
+                Clause 7.2 (Liability): If access is granted prior to completion of
+                mandatory onboarding controls, the company assumes heightened liability
+                for data handling incidents. Penalties may include termination for cause
+                of responsible approvers.
                 """
             ).strip(),
         ],
-        "line_value_usd": 185_000,
     }
 
 
 TOOL_REGISTRY = {
-    "inventory_tool": inventory_tool,
-    "logistics_tool": logistics_tool,
-    "contract_tool": contract_tool,
+    "documents_tool": documents_tool,
+    "role_requirements_tool": role_requirements_tool,
+    "compliance_tool": compliance_tool,
 }
 
 TOOLS_SPEC: list[dict[str, Any]] = [
     {
-        "name": "inventory_tool",
-        "description": "Fetch noisy inventory/ATP details for a shipment delay analysis.",
+        "name": "documents_tool",
+        "description": "Fetch noisy new-hire document intake and verification details.",
         "input_schema": {"type": "object", "properties": {}, "required": []},
     },
     {
-        "name": "logistics_tool",
-        "description": "Fetch carrier, demurrage, and appointment noise for delay analysis.",
+        "name": "role_requirements_tool",
+        "description": "Fetch noisy role requirements, certifications, and clearance checklist.",
         "input_schema": {"type": "object", "properties": {}, "required": []},
     },
     {
-        "name": "contract_tool",
-        "description": "Fetch contractual penalties and pass-through clauses.",
+        "name": "compliance_tool",
+        "description": "Fetch onboarding compliance rules, jurisdictional requirements, and liability clauses.",
         "input_schema": {"type": "object", "properties": {}, "required": []},
     },
 ]
@@ -252,10 +320,10 @@ def _only_user_assistant_blocks(
 
 SYSTEM_PROMPT = textwrap.dedent(
     """
-    You are an operations analyst helping answer delay-cost questions.
+    You are an HR onboarding analyst helping determine if a new hire is fully compliant and ready to start.
 
     You have three tools. Use them when you need facts. Be concise in your
-    final natural-language answer, but do not omit material $ impact drivers.
+    final natural-language answer, but do not omit material compliance risks or readiness blockers.
 
     Important nuance (for the demo): after you have enough information, STOP
     calling tools. If you are uncertain, prefer *re-reading prior tool output*
@@ -287,14 +355,15 @@ def main() -> None:
 
     # Deliberate second user nudge: mimics a 'supervisor' ping in chat products.
     # With a bloated transcript, models often re-call tools instead of citing prior JSON.
-    _print_banner("v1 — Supervisor ping: 'Please double-check inventory exposure'")
+    _print_banner(
+        "v1 — Supervisor ping: 'Please double-check onboarding compliance documents'"
+    )
     second_assistant = run_turn(
         client,
         state,
         extra_user_nudge=(
-            "Supervisor request: double-check whether inventory exposure actually "
-            "supports a 3-day slip without an allocation conflict. "
-            "If needed, call tools again."
+            "Supervisor request: double-check whether all required compliance documents are actually "
+            "present and verified. If needed, call tools again."
         ),
     )
     _log_state("After supervisor ping", state, second_assistant)

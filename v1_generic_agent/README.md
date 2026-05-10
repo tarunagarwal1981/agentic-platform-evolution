@@ -2,7 +2,7 @@
 
 ## What this version does
 
-`agent.py` runs a **single conversational loop** around the Anthropic Messages API. When the model chooses tools, we execute `inventory_tool`, `logistics_tool`, and `contract_tool`, then drop the **entire raw JSON** back into the thread as “tool results.”
+`agent.py` runs a **single conversational loop** around the Anthropic Messages API. When the model chooses tools, we execute `documents_tool`, `role_requirements_tool`, and `compliance_tool`, then drop the **entire raw JSON** back into the thread as “tool results.”
 
 There is **no LangGraph**: just messages + tool I/O. That is the point—most teams start here.
 
