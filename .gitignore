@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+
+# Virtual envs
+.venv/
+venv/
+.env/
+
+# OS / editor noise
+.DS_Store
+.idea/
+.vscode/
+
+__pycache__/
+*.pyc
