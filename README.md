@@ -4,7 +4,7 @@ A small Python tour of how **agent architecture** evolves when you move from “
 
 Every version answers the **same operational question** so you can compare behavior and failure modes apples-to-apples:
 
-> “What is the total cost impact if we delay this shipment by three days?”
+> “Is this new hire fully compliant and ready to start given their documents and role requirements?”
 
 ## The four versions
 
