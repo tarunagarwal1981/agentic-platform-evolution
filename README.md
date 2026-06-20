@@ -6,7 +6,7 @@ Every version answers the **same operational question** so you can compare behav
 
 > “Is this new hire fully compliant and ready to start given their documents and role requirements?”
 
-## The four versions
+## The versions
 
 | Version | Folder | Idea | What breaks (on purpose) |
 |--------:|--------|------|--------------------------|
@@ -14,6 +14,7 @@ Every version answers the **same operational question** so you can compare behav
 | **v2** | `v2_langgraph_basic/` | **LangGraph** with a **typed state** and **structured summaries** per domain. | **Static edges**: every run follows the same node path—no conditional routing when the query only needs part of the world. |
 | **v3** | `v3_tool_supervisor/` | *(Stub)* Tool-calling supervisor that decides *which tools* run and when. | Coming soon in code; see folder README for the narrative. |
 | **v4** | `v4_plan_supervisor/` | *(Stub)* Plan-first supervisor: decompose, execute, reconcile. | Coming soon in code; see folder README for the narrative. |
+| **v5** | `v5_knowledge_graph/` | *(Stub)* Knowledge graph layer — typed facts, provenance, deterministic synthesis rules. | Coming soon in code; see folder README for the narrative. |
 
 ## Model
 
